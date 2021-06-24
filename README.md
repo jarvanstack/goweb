@@ -2,26 +2,26 @@
 
 goweb is a web framefork for go
 
-## 1.goweb1 升级 HTTP
+## 1.goweb1 update HTTP
 
-(1) 提供 GET/POST 方法
+(1) provide GET/POST 
 
-(2) 提供上下文 ctx
+(2) provide context to contain reader and writer..
 
-(3) 提供 RESTFul JSON 数据返回格 API
+(3) provide RESTFul JSON  API
 
-## 2. goweb2 路由
+## 2. goweb2 tree router
 
-(1) 提供前缀树路由
+(1) provide tree router.
 
-## goweb3 分组路由控制
+## goweb3 group control
 
-(1) 提供分组路由控制，比如管理界面 /admin 都需要鉴权. /user 都需要登录
+(1) provide group control，like path `/admin` need to auth. `/user` need to login.
 
-## goweb4 中间件
+## goweb4 middleware
 
-(1) 提供中间件支持
+(1) provide middleware
 
-## 错误处理
+## error handle
 
-(1) 提供错误处理防止宕机
+(1) provide error handling to prevent downtime.
