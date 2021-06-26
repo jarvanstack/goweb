@@ -1,27 +1,27 @@
 # goweb
 
-goweb is a web framefork for go
+## goweb0 (http,restful,context)
 
-## 1.goweb1 update HTTP
+a simple web framework use tcp
 
-(1) provide GET/POST 
+how to use
 
-(2) provide context to contain reader and writer..
+```go
+web := goweb.NewWeb("/v1")
+web.Get("/ping", func(ctx *goweb.Context) {
+    ctx.Json("PONG")
+})
+web.RunHTTP(8888)
+//http://localhost:8888/v1/ping
+```
+test
 
-(3) provide RESTFul JSON  API
+```bash
+$ curl localhost:8888/v1/ping
+{"code":200,"msg":"OK","data":"PONG"}
+```
 
-## 2. goweb2 tree router
+## goweb1 (websocket)
 
-(1) provide tree router.
+implements web socket
 
-## goweb3 group control
-
-(1) provide group control，like path `/admin` need to auth. `/user` need to login.
-
-## goweb4 middleware
-
-(1) provide middleware
-
-## error handle
-
-(1) provide error handling to prevent downtime.

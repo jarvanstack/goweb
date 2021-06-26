@@ -1,4 +1,4 @@
-package goweb1
+package utest
 
 import (
 	"fmt"
