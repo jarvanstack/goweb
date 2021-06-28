@@ -7,10 +7,17 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	web := goweb.NewWeb("/v1")
+	web := goweb.NewWeb("/ws")
 	web.Get("/ping", func(ctx *goweb.Context) {
-		ctx.Json("PONG")
+		//升级为 websocket
+		ws, _ := ctx.NewWs()
+		for  {
+			msg, _ := ws.ReadMsg()
+			ws.WriteMsg(msg)
+		}
 	})
 	web.RunHTTP(8888)
-	//http://localhost:8888/v1/ping
+	//ws://localhost:8888/ws/ping
+	//http://coolaf.com/tool/chattest
+	//测试工具
 }

@@ -29,28 +29,25 @@ func (h *Http)runHTTP()  {
 	for  {
 		conn, err := listen.Accept()
 		if err != nil {
-			fmt.Printf("err=%#v\n", err)
-			log.Printf("%s\n", "Accept() error")
 			conn.Close()
 			continue
 		}
-		log.Printf("conn.RemoteAddr()=%#v\n", conn.RemoteAddr())
-		ctx, err := newContext(conn)
-		if err != nil || ctx == nil{
-			log.Printf("%s\n", "newContext(conn) err")
-			conn.Close()
-			continue
-		}
-		key := fmt.Sprintf(keyFmt,ctx.Method, ctx.Path)
-		hf,ok := h.r.httpMap[key]
-		if !ok {
-			conn.Close()
-			continue
-		}
+		//log.Printf("conn.RemoteAddr()=%#v\n", conn.RemoteAddr())
 		//开一个协程去处理 http.
-		//go func(ctx *Context) {
-		//	hf(ctx)
-		//}(ctx)
-		hf(ctx)
+		go func(conn net.Conn) {
+			ctx, err := newContext(conn)
+			if err != nil || ctx == nil{
+				conn.Close()
+				return
+			}
+			key := fmt.Sprintf(keyFmt,ctx.Method, ctx.Path)
+			hf,ok := h.r.httpMap[key]
+			if !ok {
+				conn.Close()
+				return
+			}
+			hf(ctx)
+		}(conn)
+		//hf(ctx)
 	}
 }

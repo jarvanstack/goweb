@@ -34,7 +34,7 @@ func (h *Http)runHTTP()  {
 			conn.Close()
 			continue
 		}
-		log.Printf("conn.RemoteAddr()=%#v\n", conn.RemoteAddr())
+		//log.Printf("conn.RemoteAddr()=%#v\n", conn.RemoteAddr())
 		ctx, err := newContext(conn)
 		if err != nil || ctx == nil{
 			log.Printf("%s\n", "newContext(conn) err")

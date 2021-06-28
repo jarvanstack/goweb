@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/dengjiawen8955/go_utils/restful_util"
+	"github.com/dengjiawen8955/go_utils/string_util"
 	"net"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ const (
 	contentLength   = "content-length"
 	bufSize         = 1024
 	jsonContentType = "application/json"
+	WsMagicKeyPost = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 )
 
 type Context struct {
@@ -34,6 +36,7 @@ func newContext(conn net.Conn) (*Context, error) {
 	reader := bufio.NewReader(conn)
 	//1.1 请求方法，请求路径，请求协议.
 	line, _, err := reader.ReadLine()
+	//log.Printf("%s\n", string(line))
 	s := string(line)
 	if err != nil || strings.EqualFold(s, "\r\n") {
 		//HTTP 头解析错误
@@ -48,6 +51,7 @@ func newContext(conn net.Conn) (*Context, error) {
 	//1.2 其他 header 存起来.
 	for {
 		line, _, _ := reader.ReadLine()
+		//log.Printf("%s\n", string(line))
 		if len(line) == 0 {
 			break
 		}
@@ -96,4 +100,31 @@ func (c *Context) writeHeader(contentType string,bodySize int) (int, error) {
 func (c *Context) writeBody(data []byte)(int,error) {
 	conn := c.Conn
 	return conn.Write(data)
+}
+//1.创建 ws 对象
+// 1.1. 发送协议头
+// 1.2. 创建 ws 对象.
+//2. 使用 ws 对象持续通信.
+func (c *Context) NewWs()(*WsContext,error){
+	var err error
+	//1.1
+	key,ok := c.Headers["Sec-WebSocket-Key"]
+	if !ok{
+		err = fmt.Errorf("error:%s", "not have Sec-WebSocket-Key error")
+		return nil, err
+	}
+	conn := c.Conn
+	key = key + WsMagicKeyPost
+	s1 := string_util.GetSha1ByStr(key)
+	md := string_util.GetMd5ByBytes(s1)
+	b  := bytes.Buffer{}
+	b.WriteString("HTTP/1.1 101 Switching Protocols\r\n")
+	b.WriteString("Upgrade: websocket\r\n")
+	b.WriteString("Connection: Upgrade\r\n")
+	b.WriteString("Sec-WebSocket-Accept: ")
+	b.WriteString(md)
+	b.WriteString("\r\n\r\n")
+	conn.Write(b.Bytes())
+	//1.2
+	return newWs(conn),nil
 }
