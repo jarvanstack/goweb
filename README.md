@@ -9,7 +9,7 @@ how to use
 ```go
 web := goweb.NewWeb("/v1")
 web.Get("/ping", func(ctx *goweb.Context) {
-ctx.Json(restful_util.Ok("PONG"))
+ctx.Json(restfulu.Ok("PONG"))
 })
 web.RunHTTP(8888)
 //http://localhost:8888/v1/ping

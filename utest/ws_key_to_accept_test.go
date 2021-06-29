@@ -3,7 +3,7 @@ package utest
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/dengjiawen8955/go_utils/string_util"
+	"github.com/dengjiawen8955/go_utils/stringu"
 	"github.com/dengjiawen8955/goweb/goweb1/goweb"
 	"testing"
 )
@@ -15,7 +15,7 @@ func Test_key_to_accept(t *testing.T) {
 	key := "dGhlIHNhbXBsZSBub25jZQ=="
 	//理论值s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
 	key = key + goweb.WsMagicKeyPost
-	s1 := string_util.GetSha1ByStr(key)
+	s1 := stringu.GetSha1ByStr(key)
 	sEnc := base64.StdEncoding.EncodeToString([]byte(s1))
 	fmt.Println(sEnc)
 }

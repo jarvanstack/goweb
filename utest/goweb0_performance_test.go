@@ -2,8 +2,8 @@ package utest
 
 import (
 	"fmt"
-	"github.com/dengjiawen8955/go_utils/restful_util"
-	"github.com/dengjiawen8955/go_utils/test_util"
+	"github.com/dengjiawen8955/go_utils/restfulu"
+	"github.com/dengjiawen8955/go_utils/testu"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,7 +14,7 @@ func Test_office_server(t *testing.T) {
 	http.HandleFunc("/v2/ping", func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("content-type","application/json")
 		writer.WriteHeader(http.StatusOK)
-		writer.Write(restful_util.Ok("PONG"))
+		writer.Write(restfulu.Ok("PONG"))
 	})
 	http.ListenAndServe("localhost:8889",nil)
 }
@@ -31,7 +31,7 @@ func Test_office_vs_tcp_to_http_vs_goweb(t *testing.T) {
 	method := "GET"
 	loopTimes := 1000
 	failTimes := 0
-	tu := test_util.NewTestUtil(uint32(loopTimes))
+	tu := testu.NewTestUtil(uint32(loopTimes))
 	tu.StartWithComment("预热数据")
 	for i := 0; i < loopTimes; i++ {
 		reqSuccess := httpReq(url1, method)
@@ -43,7 +43,7 @@ func Test_office_vs_tcp_to_http_vs_goweb(t *testing.T) {
 	fmt.Printf("failTimes=%#v\n", failTimes)
 	//-----------
 	failTimes = 0
-	tu = test_util.NewTestUtil(uint32(loopTimes))
+	tu = testu.NewTestUtil(uint32(loopTimes))
 	tu.StartWithComment(url1)
 	for i := 0; i < loopTimes; i++ {
 		reqSuccess := httpReq(url1, method)
@@ -56,7 +56,7 @@ func Test_office_vs_tcp_to_http_vs_goweb(t *testing.T) {
 	//-----------
 
 	failTimes = 0
-	tu = test_util.NewTestUtil(uint32(loopTimes))
+	tu = testu.NewTestUtil(uint32(loopTimes))
 	tu.StartWithComment(url2)
 	for i := 0; i < loopTimes; i++ {
 		reqSuccess := httpReq(url2, method)
@@ -68,7 +68,7 @@ func Test_office_vs_tcp_to_http_vs_goweb(t *testing.T) {
 	fmt.Printf("failTimes=%#v\n", failTimes)
 	//-----------
 	failTimes = 0
-	tu = test_util.NewTestUtil(uint32(loopTimes))
+	tu = testu.NewTestUtil(uint32(loopTimes))
 	tu.StartWithComment(url3)
 	for i := 0; i < loopTimes; i++ {
 		reqSuccess := httpReq(url3, method)
@@ -89,7 +89,7 @@ func Test_office_vs_goweb(t *testing.T) {
 	method := "GET"
 	loopTimes := 1000
 	failTimes := 0
-	tu := test_util.NewTestUtil(uint32(loopTimes))
+	tu := testu.NewTestUtil(uint32(loopTimes))
 	tu.StartWithComment(url2)
 	for i := 0; i < loopTimes; i++ {
 		reqSuccess := httpReq(url2, method)
@@ -101,7 +101,7 @@ func Test_office_vs_goweb(t *testing.T) {
 	fmt.Printf("failTimes=%#v\n", failTimes)
 	//-----------
 	failTimes = 0
-	tu = test_util.NewTestUtil(uint32(loopTimes))
+	tu = testu.NewTestUtil(uint32(loopTimes))
 	tu.StartWithComment(url1)
 	for i := 0; i < loopTimes; i++ {
 		reqSuccess := httpReq(url1, method)

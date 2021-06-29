@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/dengjiawen8955/go_utils/restful_util"
-	"github.com/dengjiawen8955/go_utils/string_util"
+	"github.com/dengjiawen8955/go_utils/restfulu"
+	"github.com/dengjiawen8955/go_utils/stringu"
 	"net"
 	"strconv"
 	"strings"
@@ -79,7 +79,7 @@ func newContext(conn net.Conn) (*Context, error) {
 
 //Write json back and return.
 func (c *Context) Json(in interface{}) {
-	body := restful_util.Ok(in)
+	body := restfulu.Ok(in)
 	c.writeHeader(jsonContentType,len(body))
 	c.writeBody(body)
 	err := c.Conn.Close()
@@ -115,8 +115,8 @@ func (c *Context) NewWs()(*WsContext,error){
 	}
 	conn := c.Conn
 	key = key + WsMagicKeyPost
-	s1 := string_util.GetSha1ByStr(key)
-	md := string_util.GetMd5ByBytes(s1)
+	s1 := stringu.GetSha1ByStr(key)
+	md := stringu.GetMd5ByBytes(s1)
 	b  := bytes.Buffer{}
 	b.WriteString("HTTP/1.1 101 Switching Protocols\r\n")
 	b.WriteString("Upgrade: websocket\r\n")

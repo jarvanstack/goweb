@@ -2,7 +2,7 @@ package goweb
 
 import (
 	"fmt"
-	"github.com/dengjiawen8955/go_utils/base_util"
+	"github.com/dengjiawen8955/go_utils/baseu"
 	"net"
 )
 
@@ -34,7 +34,7 @@ func (w *WsContext) ReadMsg() ([]byte,error){
 	if l == 126 {
 		next := make([]byte,6)
 		conn.Read(next)
-		dataLen,err = base_util.BytesToInt(next[:2],false)
+		dataLen,err = baseu.BytesToInt(next[:2],false)
 		if	err!=nil {
 			return nil, err
 		}
@@ -42,7 +42,7 @@ func (w *WsContext) ReadMsg() ([]byte,error){
 	}else if l == 127 {
 		next := make([]byte,10)
 		conn.Read(next)
-		dataLen,err = base_util.BytesToInt(next[:8],false)
+		dataLen,err = baseu.BytesToInt(next[:8],false)
 		if	err!=nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func (w *WsContext) WriteMsg(data []byte) error {
 	payloadSize := 0
 	conn := w.Conn
 	if dataL < 126{
-	}else if dataL >= 126 && dataL < int(base_util.Uint8Max) {
+	}else if dataL >= 126 && dataL < int(baseu.UINT16_MAX) {
 		payloadSize = 2
 	}else  {
 		payloadSize = 8
@@ -79,7 +79,7 @@ func (w *WsContext) WriteMsg(data []byte) error {
 	//帧
 	frame := make([]byte,2+payloadSize+dataL)
 	//写入第一byte 1000 0001 128 + 1 = 129
-	b1, err := base_util.UintToBytes(129, 1)
+	b1, err := baseu.UintToBytes(129, 1)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (w *WsContext) WriteMsg(data []byte) error {
 	switch payloadSize {
 	case 0:
 		//写入第二帧长度
-		b2, err := base_util.IntToBytes(dataL,1)
+		b2, err := baseu.IntToBytes(dataL,1)
 		if err != nil {
 			return err
 		}
@@ -97,7 +97,7 @@ func (w *WsContext) WriteMsg(data []byte) error {
 		break
 	case 2:
 		//写入第二帧长度
-		b2, err := base_util.IntToBytes(126,1)
+		b2, err := baseu.IntToBytes(126,1)
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func (w *WsContext) WriteMsg(data []byte) error {
 		break
 	case 8:
 		//写入第二帧长度
-		b2, err := base_util.IntToBytes(127,1)
+		b2, err := baseu.IntToBytes(127,1)
 		if err != nil {
 			return err
 		}
@@ -117,7 +117,7 @@ func (w *WsContext) WriteMsg(data []byte) error {
 	}
 	if payloadSize>0 {
 		//写入额外长度
-		b3, err := base_util.UintToBytes(uint64(dataL), uint8(payloadSize))
+		b3, err := baseu.UintToBytes(uint64(dataL), uint8(payloadSize))
 		if err != nil {
 			return err
 		}
