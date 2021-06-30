@@ -64,3 +64,30 @@ result
 
 ![web](/img/websocket1.png)
 
+## goweb2 trie router
+
+use trie implements router and params store.
+
+how to use.
+
+```go
+web := goweb.NewWeb("/bmft")
+web.Get("/:lang/doc", func(ctx *goweb.Context) {
+    fmt.Printf("ctx.Params=%#v\n", ctx.Params)
+    lang := ctx.Params["lang"]
+    fmt.Printf("lang=%#v\n", lang)
+    ctx.Json(restfulu.Ok(lang))
+})
+web.RunHTTP(8888)
+```
+
+test 
+
+```bash
+$ curl http://localhost:8888/bmft/go/doc
+{"code":200,"msg":"OK","data":"doc"}
+```
+
+## goweb3 group control
+
+
