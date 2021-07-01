@@ -3,64 +3,56 @@ package goweb
 import "strings"
 
 type node struct {
-	pattern  string // 待匹配路由，例如 /p/:lang
-	part     string // 路由中的一部分，例如 :lang
-	children []*node // 子节点，例如 [doc, tutorial, intro]
-	isWild   bool // 是否通配符 wildcard 通配符.，part 含有 : 或 * 时为true
+	keyOfHandler string  // 例如 GET-/bmft/v1/ping
+	currentPath  string  // 目前的路由路径，例如 v1
+	children     []*node // 子节点，例如 [ping, hi, hello]
 }
-// 第一个匹配成功的节点，用于插入
-func (n *node) matchChild(part string) *node {
+
+func newNode(currentPath string) *node {
+	return &node{
+		keyOfHandler: "",
+		currentPath: currentPath,
+		children: make([]*node,0),
+	}
+}
+func (n *node) getChild(path string) *node {
 	for _, child := range n.children {
-		if child.part == part || child.isWild {
+		if child.currentPath == path {
 			return child
 		}
 	}
 	return nil
 }
-// 所有匹配成功的节点，用于查找
-func (n *node) matchChildren(part string) []*node {
-	nodes := make([]*node, 0)
-	for _, child := range n.children {
-		if child.part == part || child.isWild {
-			nodes = append(nodes, child)
-		}
-	}
-	return nodes
+func parsePath(path string) []string {
+	split := strings.Split(path, "/")
+	return split[1:]
 }
-func (n *node) insert(pattern string, parts []string, height int) {
-	if len(parts) == height {
-		n.pattern = pattern
+func (n *node) insert(keyOfHandler string,paths []string,height int)  {
+	//如果最后一层都插入结束
+	if height == len(paths) {
+		//将 key 放到最后一个叶子节点里面.
+		n.keyOfHandler = keyOfHandler
 		return
 	}
-
-	part := parts[height]
-	child := n.matchChild(part)
-	if child == nil {
-		child = &node{part: part, isWild: part[0] == ':' || part[0] == '*'}
-		n.children = append(n.children, child)
+	//继续插入
+	currentPath := paths[height]
+	child := n.getChild(currentPath)
+	if child==nil {
+		n.children = append(n.children, newNode(currentPath))
+		child = n.getChild(currentPath)
 	}
-	child.insert(pattern, parts, height+1)
+	child.insert(keyOfHandler,paths,height+1)
 }
-
-func (n *node) search(parts []string, height int) *node {
-	if len(parts) == height || strings.HasPrefix(n.part,"*") {
-		if n.pattern == "" {
+//node 自己是通过 map 得到的 map["GET-/bmft']
+//所以传进来的 paths 需要将第一个 /bmft 进行裁剪，否者匹配失败
+func (n *node) search(paths []string)*node  {
+	tmp := n
+	for i := 0; i < len(paths); i++ {
+		tmp = tmp.getChild(paths[i])
+		if tmp == nil {
 			return nil
 		}
-		return n
 	}
-
-	part := parts[height]
-	children := n.matchChildren(part)
-
-	for _, child := range children {
-		result := child.search(parts, height+1)
-		if result != nil {
-			return result
-		}
-	}
-
-	return nil
+	return tmp
 }
-
 

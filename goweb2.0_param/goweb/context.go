@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/dengjiawen8955/go_utils/stringu"
-	"log"
 	"net"
 	"strconv"
 	"strings"
@@ -26,6 +25,7 @@ type Context struct {
 	Proto   string            //HTTP/1.1
 	Headers map[string]string //请求头
 	body    []byte            //请求体数据啥的，直接放这里.
+	Params  map[string]string //请求地址参数比如 lang : golang
 }
 
 //GET /ping HTTP/1.1
@@ -35,6 +35,7 @@ func newContext(conn net.Conn) (*Context, error) {
 		Conn: conn,
 		Addr: conn.RemoteAddr(),
 		Headers: make(map[string]string),
+		Params: make(map[string]string),
 	}
 	//1.get headers
 	reader := bufio.NewReader(conn)
@@ -86,7 +87,7 @@ func (c *Context) Json(data []byte) {
 	c.writeHeader(jsonContentType, len(data))
 	c.writeBody(data)
 	err := c.Conn.Close()
-	log.Printf("err=%#v\n", err)
+	fmt.Printf("close err=%#v\n", err)
 }
 func (c *Context) writeHeader(contentType string, bodySize int) (int, error) {
 	conn := c.Conn
