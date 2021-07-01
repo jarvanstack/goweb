@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/dengjiawen8955/go_utils/restfulu"
-	"github.com/dengjiawen8955/goweb/goweb3/goweb"
+	"github.com/dengjiawen8955/goweb/goweb2.0_param/goweb"
 	"log"
 )
 

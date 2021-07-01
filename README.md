@@ -72,11 +72,8 @@ how to use.
 
 ```go
 web := goweb.NewWeb("/bmft")
-web.Get("/:lang/doc", func(ctx *goweb.Context) {
-    fmt.Printf("ctx.Params=%#v\n", ctx.Params)
-    lang := ctx.Params["lang"]
-    fmt.Printf("lang=%#v\n", lang)
-    ctx.Json(restfulu.Ok(lang))
+web.Get("/v1/doc", func(ctx *goweb.Context) {
+ctx.Json(restfulu.Ok(ctx.Path))
 })
 web.RunHTTP(8888)
 ```
@@ -84,9 +81,14 @@ web.RunHTTP(8888)
 test 
 
 ```bash
-$ curl http://localhost:8888/bmft/go/doc
-{"code":200,"msg":"OK","data":"doc"}
+$ curl http://localhost:8888/bmft/v1/doc
+{"code":200,"msg":"OK","data":"/bmft/v1/doc"}
 ```
+
+> trie provide base router function not provide parameter analysis function
+
+
+
 
 ## goweb3 group control
 

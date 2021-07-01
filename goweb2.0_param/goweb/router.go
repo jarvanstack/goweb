@@ -50,8 +50,8 @@ func (r *router) getRoute(method string, path string) (*node, map[string]string)
 	searchParts := parsePattern(path)
 	rootKey := fmt.Sprintf(keyFmt, method, r.contextPath)
 	params := make(map[string]string)
-	root, ok := r.roots[rootKey]
-	if !ok {
+	root := r.roots[rootKey]
+	if root == nil {
 		return nil, nil
 	}
 	n := root.search(searchParts[1:], 0)
