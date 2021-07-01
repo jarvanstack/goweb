@@ -92,4 +92,67 @@ $ curl http://localhost:8888/bmft/v1/doc
 
 ## goweb3 group control
 
+how to use 
 
+```go
+web := goweb.NewWeb("/bmft")
+v1 := web.NewGroup("/v1")
+{
+    v2 := v1.NewGroup("/v2")
+    {
+        v2.Get("/ping", func(ctx *goweb.Context) {
+            ctx.Json(restfulu.Ok(ctx.Path))
+        })
+    }
+}
+web.RunHTTP(8888)
+// http://localhost:8888/bmft/v1/v2/ping
+```
+
+test
+
+```bash
+$ curl http://localhost:8888/bmft/v1/v2/ping
+{"code":200,"msg":"OK","data":"/bmft/v1/v2/ping"}
+```
+
+### goweb4 middleware
+
+
+how to use
+
+```go
+func logMiddleware(ctx *goweb.Context)  {
+	log.Printf("%s-%s",ctx.Method,ctx.Path)
+	start := time.Now().UnixNano()
+	ctx.Next()
+	log.Printf("---COST=%dms\n", (time.Now().UnixNano()-start)/testu.NS_TO_MS)
+}
+func main() {
+	web := goweb.NewWeb("/bmft")
+	v1 := web.NewGroup("/v1")
+	v1.AddMiddleware(logMiddleware)
+	{
+		v1.Get("/ping", func(ctx *goweb.Context) {
+			ctx.Json(restfulu.Ok(ctx.Path))
+		})
+	}
+	web.RunHTTP(8888)
+	// http://localhost:8888/bmft/v1/ping
+}
+```
+
+
+test
+
+```bash
+$ curl http://localhost:8888/bmft/v1/ping
+{"code":200,"msg":"OK","data":"/bmft/v1/ping"}
+```
+
+result
+
+```bash
+2021/07/01 14:52:56 GET-/bmft/v1/ping
+2021/07/01 14:52:56 ---COST=0ms
+```
