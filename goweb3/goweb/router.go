@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	keyFmt = "%s-%s" //比如 get-/user/name
+	keyFmt = "%s-%s" //比如 GET-/user/name
 )
 
 type HttpHandler func(ctx *Context)
@@ -26,11 +26,11 @@ func newRouter(contextPath string) *router {
 	}
 }
 //添加到路由
-//method: get
+//method: GET
 //cp: = /bmft
-//key: get-/bmft/v1/ping
+//key: GET-/bmft/v1/ping
 func (r *router) addRouter(method, urlPath string, httpHandler HttpHandler) {
-	// get-/bmft
+	// GET-/bmft
 	rootKey := fmt.Sprintf(keyFmt, method, r.contextPath)
 	_, ok := r.roots[rootKey]
 	if !ok {

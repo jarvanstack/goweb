@@ -36,7 +36,7 @@ func newContext(conn net.Conn) (*Context, error) {
 		Addr: conn.RemoteAddr(),
 		Headers: make(map[string]string),
 	}
-	//1.get headers
+	//1.GET headers
 	reader := bufio.NewReader(conn)
 	//1.1 请求方法，请求路径，请求协议.
 	line, _, err := reader.ReadLine()

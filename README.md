@@ -9,7 +9,7 @@ how to use
 ```go
 web := goweb.NewWeb("/v1")
 web.Get("/ping", func(ctx *goweb.Context) {
-ctx.Json(restfulu.Ok("PONG"))
+    ctx.Json(restfulu.Ok("PONG"))
 })
 web.RunHTTP(8888)
 //http://localhost:8888/v1/ping
@@ -38,16 +38,16 @@ implements web socket
 how to use
 
 ```go
-    web := goweb.NewWeb("/ws")
-    web.Get("/ping", func(ctx *goweb.Context) {
+web := goweb.NewWeb("/ws")
+web.Get("/ping", func(ctx *goweb.Context) {
     //升级为 websocket
     ws, _ := ctx.NewWs()
     for  {
-    msg, _ := ws.ReadMsg()
-    ws.WriteMsg(msg)
+        msg, _ := ws.ReadMsg()
+        ws.WriteMsg(msg)
     }
-    })
-    web.RunHTTP(8888)
+})
+web.RunHTTP(8888)
 ```
 
 test
@@ -73,7 +73,7 @@ how to use.
 ```go
 web := goweb.NewWeb("/bmft")
 web.Get("/v1/doc", func(ctx *goweb.Context) {
-ctx.Json(restfulu.Ok(ctx.Path))
+    ctx.Json(restfulu.Ok(ctx.Path))
 })
 web.RunHTTP(8888)
 ```
@@ -155,4 +155,49 @@ result
 ```bash
 2021/07/01 14:52:56 GET-/bmft/v1/ping
 2021/07/01 14:52:56 ---COST=0ms
+```
+
+## goweb5 final
+
+* log middle ware
+
+* error try catch
+
+how to use
+
+```bash
+web := goweb.NewWeb("/bmft")
+v1 := web.NewGroup("/v1")
+{
+    v1.Get("/ping", func(ctx *goweb.Context) {
+        time.Sleep(time.Second)
+        panic(fmt.Errorf("error:%s", "error test"))
+    })
+}
+web.RunHTTP(8888)
+// http://localhost:8888/bmft/v1/ping
+```
+
+test
+
+```bash
+$ curl http://localhost:8888/bmft/v1/ping
+{"code":500,"msg":"SERVER_ERROR","data":"SERVER_ERROR"}
+
+```
+result
+
+```bash
+2021/07/01 16:35:16 Listening and serving HTTP on 0.0.0.0:8888
+2021/07/01 16:35:21 error:error test
+Traceback:
+	D:/Enviroment/Go/GoInstall/src/runtime/panic.go:969
+	D:/Enviroment/Go/goland.go/goweb/goweb5/main.go:16
+	D:/Enviroment/Go/goland.go/goweb/goweb5/goweb/context.go:88
+	D:/Enviroment/Go/goland.go/goweb/goweb5/goweb/goweb.go:73
+	D:/Enviroment/Go/goland.go/goweb/goweb5/goweb/context.go:88
+	D:/Enviroment/Go/goland.go/goweb/goweb5/goweb/goweb.go:91
+	D:/Enviroment/Go/goland.go/goweb/goweb5/goweb/context.go:88
+	D:/Enviroment/Go/goland.go/goweb/goweb5/goweb/router.go:103
+	D:/Enviroment/Go/GoInstall/src/runtime/asm_amd64.s:1375
 ```
