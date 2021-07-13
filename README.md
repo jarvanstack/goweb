@@ -3,8 +3,26 @@
 
 ## QUICK START
 
-
 ```bash
+require github.com/dengjiawen8955/goweb v1.0.0
+require github.com/dengjiawen8955/go_utils v1.6.2
+```
+
+
+```go
+import (
+	"github.com/dengjiawen8955/go_utils/restfulu"
+	"github.com/dengjiawen8955/goweb/goweb"
+	"testing"
+)
+
+func Test1(t *testing.T) {
+	web := goweb.NewWeb("/v1")
+	web.Get("/ping", func(ctx *goweb.Context) {
+		ctx.Json(restfulu.Ok("PONG"))
+	})
+	web.RunHTTP(8888)
+}
 
 ```
 
@@ -15,7 +33,7 @@ a simple web framework use tcp
 how to use
 
 ```go
-web := goweb.NewWeb("/v1")
+web := goweb.NewWeb("/goweb")
 web.Get("/ping", func(ctx *goweb.Context) {
     ctx.Json(restfulu.Ok("PONG"))
 })
@@ -25,7 +43,7 @@ web.RunHTTP(8888)
 test
 
 ```bash
-$ curl localhost:8888/v1/ping
+$ curl localhost:8888/goweb/ping
 {"code":200,"msg":"OK","data":"PONG"}
 ```
 
@@ -80,7 +98,7 @@ how to use.
 
 ```go
 web := goweb.NewWeb("/bmft")
-web.Get("/v1/doc", func(ctx *goweb.Context) {
+web.Get("/goweb/doc", func(ctx *goweb.Context) {
     ctx.Json(restfulu.Ok(ctx.Path))
 })
 web.RunHTTP(8888)
@@ -104,7 +122,7 @@ how to use
 
 ```go
 web := goweb.NewWeb("/bmft")
-v1 := web.NewGroup("/v1")
+v1 := web.NewGroup("/goweb")
 {
     v2 := v1.NewGroup("/v2")
     {
@@ -138,7 +156,7 @@ func logMiddleware(ctx *goweb.Context)  {
 }
 func main() {
 	web := goweb.NewWeb("/bmft")
-	v1 := web.NewGroup("/v1")
+	v1 := web.NewGroup("/goweb")
 	v1.AddMiddleware(logMiddleware)
 	{
 		v1.Get("/ping", func(ctx *goweb.Context) {
@@ -161,7 +179,7 @@ $ curl http://localhost:8888/bmft/v1/ping
 result
 
 ```bash
-2021/07/01 14:52:56 GET-/bmft/v1/ping
+2021/07/01 14:52:56 GET-/bmft/goweb/ping
 2021/07/01 14:52:56 ---COST=0ms
 ```
 
@@ -175,7 +193,7 @@ how to use
 
 ```bash
 web := goweb.NewWeb("/bmft")
-v1 := web.NewGroup("/v1")
+goweb := web.NewGroup("/v1")
 {
     v1.Get("/ping", func(ctx *goweb.Context) {
         time.Sleep(time.Second)
@@ -183,7 +201,7 @@ v1 := web.NewGroup("/v1")
     })
 }
 web.RunHTTP(8888)
-// http://localhost:8888/bmft/v1/ping
+// http://localhost:8888/bmft/goweb/ping
 ```
 
 test

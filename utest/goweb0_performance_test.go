@@ -25,9 +25,9 @@ func Test_office_server(t *testing.T) {
 //nice
 func Test_office_vs_tcp_to_http_vs_goweb(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
-	url1 := "http://127.0.0.1:9000/v1/ping"
+	url1 := "http://127.0.0.1:9000/goweb/ping"
 	url2 := "http://127.0.0.1:8889/v2/ping"
-	url3 := "http://127.0.0.1:8888/v1/ping"
+	url3 := "http://127.0.0.1:8888/goweb/ping"
 	method := "GET"
 	loopTimes := 1000
 	failTimes := 0
@@ -85,7 +85,7 @@ func Test_office_vs_tcp_to_http_vs_goweb(t *testing.T) {
 func Test_office_vs_goweb(t *testing.T) {
 	log.SetFlags(log.Lshortfile)
 	url1 := "http://127.0.0.1:8889/v2/ping"
-	url2 := "http://127.0.0.1:8888/v1/ping"
+	url2 := "http://127.0.0.1:8888/goweb/ping"
 	method := "GET"
 	loopTimes := 1000
 	failTimes := 0

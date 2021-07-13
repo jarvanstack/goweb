@@ -16,7 +16,7 @@ func logMiddleware(ctx *goweb.Context)  {
 }
 func main() {
 	web := goweb.NewWeb("/bmft")
-	v1 := web.NewGroup("/v1")
+	v1 := web.NewGroup("/goweb")
 	v1.AddMiddleware(logMiddleware)
 	{
 		v1.Get("/ping", func(ctx *goweb.Context) {

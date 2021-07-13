@@ -8,7 +8,7 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	web := goweb.NewWeb("/v1")
+	web := goweb.NewWeb("/goweb")
 	web.Get("/ping", func(ctx *goweb.Context) {
 		ctx.Json(restfulu.Ok("PONG"))
 	})

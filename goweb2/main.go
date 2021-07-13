@@ -9,7 +9,7 @@ import (
 func main() {
 	log.SetFlags(log.Lshortfile)
 	web := goweb.NewWeb("/bmft")
-	web.Get("/v1/doc", func(ctx *goweb.Context) {
+	web.Get("/goweb/doc", func(ctx *goweb.Context) {
 		ctx.Json(restfulu.Ok(ctx.Path))
 	})
 	web.RunHTTP(8888)

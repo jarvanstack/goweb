@@ -31,7 +31,7 @@ func newRouter(contextPath string,web *Web) *router {
 //添加到路由
 //method: GET
 //cp: = /bmft
-//key: GET-/bmft/v1/ping
+//key: GET-/bmft/goweb/ping
 func (r *router) addRouter(method, urlPath string, httpHandler HttpHandler) {
 	// GET-/bmft
 	rootKey := fmt.Sprintf(keyFmt, method, r.contextPath)

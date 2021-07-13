@@ -9,7 +9,7 @@ import (
 
 func main() {
 	web := goweb.NewWeb("/bmft")
-	v1 := web.NewGroup("/v1")
+	v1 := web.NewGroup("/goweb")
 	{
 		v1.Get("/ping", func(ctx *goweb.Context) {
 			time.Sleep(time.Second)

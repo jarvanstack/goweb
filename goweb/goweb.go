@@ -1,4 +1,4 @@
-package v1
+package goweb
 
 import (
 	"github.com/dengjiawen8955/go_utils/restfulu"

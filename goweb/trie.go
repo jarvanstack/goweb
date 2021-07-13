@@ -1,10 +1,10 @@
-package v1
+package goweb
 
 import "strings"
 
 type node struct {
-	keyOfHandler string  // 例如 GET-/bmft/v1/ping
-	currentPath  string  // 目前的路由路径，例如 v1
+	keyOfHandler string  // 例如 GET-/bmft/goweb/ping
+	currentPath  string  // 目前的路由路径，例如 goweb
 	children     []*node // 子节点，例如 [ping, hi, hello]
 }
 

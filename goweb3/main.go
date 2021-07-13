@@ -9,7 +9,7 @@ import (
 func main() {
 	log.SetFlags(log.Lshortfile)
 	web := goweb.NewWeb("/bmft")
-	v1 := web.NewGroup("/v1")
+	v1 := web.NewGroup("/goweb")
 	{
 		v2 := v1.NewGroup("/v2")
 		{

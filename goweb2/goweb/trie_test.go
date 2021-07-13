@@ -6,6 +6,6 @@ import (
 )
 
 func TestParsePath(t *testing.T) {
-	path := parsePath("/v1/ping")
+	path := parsePath("/goweb/ping")
 	log.Printf("path=%#v\n", path)
 }
