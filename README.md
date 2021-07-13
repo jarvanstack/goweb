@@ -1,5 +1,13 @@
 # goweb
 
+
+## QUICK START
+
+
+```bash
+
+```
+
 ## goweb0 (http,restful,context)
 
 a simple web framework use tcp
@@ -62,7 +70,7 @@ ws://localhost:8888/ws/ping
 
 result
 
-![web](/img/websocket1.png)
+![web](img/websocket1.png)
 
 ## goweb2 trie router
 
