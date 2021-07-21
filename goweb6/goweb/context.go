@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -156,9 +157,47 @@ type FromData struct {
 	Data        []byte
 }
 
-func (c *Context) GetFormData() map[string]*FromData {
-	m := make(map[string]*FromData)
+//FormData 我
+func (c *Context) GetFormData() (map[string]*FromData, error) {
+	boundary := ""
+	formData := make(map[string]*FromData)
 	//1. 拿到分割符
+	ct, ok := c.Headers[ContentType]
+	if !ok {
+		return nil, fmt.Errorf("[error]:do not have contentType header")
+	}
+	splits := strings.Split(ct, "boundary=")
+	if len(splits) != 2 {
+		return nil, fmt.Errorf("[error]:boundary split err")
+	}
+	//赋值 boundary.
+	boundary = splits[1]
+
 	//2. 拿到数据
-	return m
+	buffer := bytes.NewBuffer(c.Body)
+	for {
+		//换行读取
+		line, err := buffer.ReadBytes('\n')
+		if err != nil {
+			_, err := buffer.ReadBytes('\n')
+			if err == io.EOF {
+				break
+			} else {
+				continue
+			}
+		}
+		//判断是否为分割符
+		if string(line) == boundary {
+			//读取接下
+			line, err := buffer.ReadBytes('\n')
+			if err != nil {
+				break
+			}
+			regx := `Content-Disposition: (form-data); name="file"; filename="Snipaste_2021-07-07_15-49-56.png"`
+			stringu.GetSubStringByRegex(string(line), regx)
+		}
+
+	}
+
+	return formData, nil
 }

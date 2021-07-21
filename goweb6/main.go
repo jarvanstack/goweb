@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	fmt.Printf("%s\n", "hi")
 	web := goweb.NewWeb("/bmft")
 	v1 := web.NewGroup("/v1")
 	{
