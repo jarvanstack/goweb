@@ -71,12 +71,11 @@ func (w *Web) RunHTTP(port int) {
 
 //log记录每次请求信息中间件
 func logMiddleware(ctx *Context) {
-	start := time.Now().UnixNano()
 	ctx.Next()
 	cur := time.Now().UnixNano()
 	log.Printf("%s|COST=%dms|%s|%s",
 		time.Now().Format(testu.TIME_FOMART),
-		(cur-start)/testu.NS_TO_MS,
+		(cur-ctx.StartTimeStamp)/testu.NS_TO_MS,
 		ctx.Method,
 		ctx.Path,
 	)

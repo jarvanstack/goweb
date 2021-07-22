@@ -8,6 +8,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dengjiawen8955/go_utils/stringu"
 )
@@ -21,25 +22,27 @@ const (
 )
 
 type Context struct {
-	Conn         net.Conn
-	Addr         net.Addr          //conn 拿到的地址
-	Method       string            //GET
-	Path         string            //ping
-	Proto        string            //HTTP/1.1
-	Headers      map[string]string //请求头
-	Body         []byte            //请求体数据啥的，直接放这里.
-	Handlers     []HttpHandler     //中间件+业务handler
-	HandlerIndex int               //index 记录当前执行到第几个中间件
+	Conn           net.Conn
+	Addr           net.Addr          //conn 拿到的地址
+	Method         string            //GET
+	Path           string            //ping
+	Proto          string            //HTTP/1.1
+	Headers        map[string]string //请求头
+	Body           []byte            //请求体数据啥的，直接放这里.
+	Handlers       []HttpHandler     //中间件+业务handler
+	HandlerIndex   int               //index 记录当前执行到第几个中间件
+	StartTimeStamp int64             //会话开始的时间戳,用于计算耗时.
 }
 
 //GET /ping HTTP/1.1
 //Host    img.mukewang.com
 func newContext(conn net.Conn) (*Context, error) {
 	ctx := &Context{
-		Conn:         conn,
-		Addr:         conn.RemoteAddr(),
-		Headers:      make(map[string]string),
-		HandlerIndex: -1,
+		Conn:           conn,
+		Addr:           conn.RemoteAddr(),
+		Headers:        make(map[string]string),
+		HandlerIndex:   -1,
+		StartTimeStamp: time.Now().UnixNano(),
 	}
 	//1.GET headers
 	reader := bufio.NewReader(conn)
@@ -160,7 +163,7 @@ type FromData struct {
 //FormData 我
 func (c *Context) GetFormData() (map[string]*FromData, error) {
 	boundary := ""
-	formData := make(map[string]*FromData)
+	formDataMap := make(map[string]*FromData)
 	//1. 拿到分割符
 	ct, ok := c.Headers[ContentType]
 	if !ok {
@@ -188,16 +191,29 @@ func (c *Context) GetFormData() (map[string]*FromData, error) {
 		}
 		//判断是否为分割符
 		if string(line) == boundary {
+			fromD := &FromData{}
 			//读取接下
 			line, err := buffer.ReadBytes('\n')
 			if err != nil {
 				break
 			}
-			regx := `Content-Disposition: (form-data); name="file"; filename="Snipaste_2021-07-07_15-49-56.png"`
-			stringu.GetSubStringByRegex(string(line), regx)
+			str := string(line)
+			reg := `Content-Disposition: (\S*?); name="(\S*?)"; filename="(\S*?)"`
+			subs := stringu.GetSubStringByRegex(str, reg)
+			fromD.Name = subs[1]
+			fromD.FileName = subs[2]
+			//读取接下
+			line, err = buffer.ReadBytes('\n')
+			if err != nil {
+				break
+			}
+			str2 := string(line)
+			regx2 := `Content-Type: (\S*)`
+			subs2 := stringu.GetSubStringByRegex(str2, regx2)
+			fromD.ContentType = subs2[0]
 		}
 
 	}
 
-	return formData, nil
+	return formDataMap, nil
 }
