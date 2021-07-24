@@ -14,14 +14,31 @@ func main() {
 	v1 := web.NewGroup("/v1")
 	{
 		v1.Post("/sf", func(ctx *goweb.Context) {
-			b := ctx.Body
+			b := ctx.GetBody()
 			fmt.Printf("%s\n", "--------body------")
 			fmt.Printf("%s\n", string(b))
 			//--处理 1. 拿到boundary
 			// buf := bytes.NewBuffer(b)
 			// buf.ReadBytes("")
 			//返回数据
+			// form, err := ctx.GetForm()
+			// if err != nil {
+			// 	fmt.Printf("%s\n", "bad")
+			// } else {
+			// 	fmt.Printf("form=%#v\n", form)
+			// 	fmt.Printf("files=%#v\n", form.FormFileMap)
+			// 	f2 := form.FormFileMap["file2"].Data
+			// 	fmt.Printf("f2=%#v\n", f2)
+			// 	fmt.Printf("f2=%#v\n", string(f2))
+			// 	f3 := form.FormFileMap["img3"]
+			// 	file, _ := os.OpenFile(f3.FileName, os.O_RDWR|os.O_CREATE, 0766)
+			// 	file.Write(f3.Data)
+			// 	file.Close()
+			// 	fmt.Printf("datas=%#v\n", form.FormDataMap)
+			// 	fmt.Printf("%s\n", "ok")
+			// }
 			ctx.Json(restfulu.Ok("OK"))
+
 		})
 	}
 	web.RunHTTP(8888)

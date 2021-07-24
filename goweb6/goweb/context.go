@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dengjiawen8955/go_utils/stringu"
 )
 
+//常量
 const (
 	ContentLength   = "content-length"
 	ContentType     = "content-type"
@@ -21,17 +22,168 @@ const (
 	WsMagicKeyPost  = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 )
 
+//变量
+var once sync.Once
+
 type Context struct {
-	Conn           net.Conn
-	Addr           net.Addr          //conn 拿到的地址
-	Method         string            //GET
-	Path           string            //ping
-	Proto          string            //HTTP/1.1
-	Headers        map[string]string //请求头
-	Body           []byte            //请求体数据啥的，直接放这里.
-	Handlers       []HttpHandler     //中间件+业务handler
-	HandlerIndex   int               //index 记录当前执行到第几个中间件
-	StartTimeStamp int64             //会话开始的时间戳,用于计算耗时.
+	Conn    net.Conn
+	Addr    net.Addr          //conn 拿到的地址
+	Method  string            //GET
+	Path    string            //ping
+	Proto   string            //HTTP/1.1
+	Headers map[string]string //请求头
+	body    []byte            //异步请求体 注意:使用的时候请使用 GetBody() 方式来获取
+
+	Handlers       []HttpHandler //中间件+业务handler
+	HandlerIndex   int           //index 记录当前执行到第几个中间件
+	StartTimeStamp int64         //会话开始的时间戳,用于计算耗时.
+	BodyReady      chan int      //管道读取 body body 数据读取成功后会进入会再管道中存放值
+	BodySize       int           //数据体的大小
+}
+
+//FormData 我
+func (c *Context) GetForm() (*Form, error) {
+	boundary := ""
+	endBoundary := ""
+	isFinish := false
+	form := &Form{
+		FormFileMap: make(map[string]*FormFile),
+		FormDataMap: make(map[string]*FormData),
+	}
+	// 1. 拿到分割符
+	ct, ok := c.Headers[ContentType]
+	if !ok {
+		return nil, fmt.Errorf("[error]:do not have contentType header")
+	}
+	splits := strings.Split(ct, "boundary=")
+	if len(splits) != 2 {
+		return nil, fmt.Errorf("[error]:boundary split err")
+	}
+	//赋值 boundary.
+	boundary = "--" + splits[1] + "\r\n"
+	endBoundary = "--" + splits[1] + "--\r\n"
+	//拿到数据body
+	buffer := bytes.NewBuffer(c.GetBody())
+	//取出第一行没用的分隔符
+	_, err := buffer.ReadBytes('\n')
+	if err != nil {
+		return nil, fmt.Errorf("[error]:第一个boundary解析失败")
+	}
+	for {
+		//2.file 或者 data
+		l2, err := buffer.ReadBytes('\n')
+		if err != nil {
+			break
+		}
+		splits := strings.Split(string(l2), "; ")
+		if len(splits) == 3 {
+			file := &FormFile{}
+			//file
+			reg := `name="(\S*?)"`
+			subs, err := stringu.GetSubStringByRegex(splits[1], reg)
+			if err != nil {
+				continue
+			}
+			file.Name = subs[0]
+			reg = `filename="(\S*?)"`
+			subs, err = stringu.GetSubStringByRegex(splits[2], reg)
+			if err != nil {
+				continue
+			}
+			file.FileName = subs[0]
+			line, err := buffer.ReadBytes('\n')
+			if err != nil {
+				continue
+			}
+			reg = `Content-Type: (\S*?)`
+			subs, err = stringu.GetSubStringByRegex(string(line), reg)
+			if err != nil {
+				continue
+			}
+			file.ContentType = subs[0]
+			//开始读取数据
+			var data bytes.Buffer
+			for {
+				line, err := buffer.ReadBytes('\n')
+				s := string(line)
+				if err != nil {
+					break
+				}
+				if strings.Compare(s, boundary) == 0 {
+					break
+				}
+				//结束
+				if strings.Compare(s, endBoundary) == 0 {
+					isFinish = true
+					break
+				}
+				//内存拷贝
+				_, err = data.Write(line)
+				if err != nil {
+					//内存爆炸才会抛出异常.
+					return nil, fmt.Errorf("[error]:buffer becomes too large, Write will panic with ErrTooLarge")
+				}
+			}
+			bs := data.Bytes()
+			file.Data = bs[4 : len(bs)-2]
+			form.FormFileMap[file.Name] = file
+			if isFinish {
+				return form, nil
+			}
+		} else if len(splits) == 2 {
+			//data
+			formD := &FormData{}
+			//file
+			reg := `name="(\S*?)"`
+			subs, err := stringu.GetSubStringByRegex(splits[1], reg)
+			if err != nil {
+				continue
+			}
+			formD.Name = subs[0]
+			//开始读取数据
+			var data bytes.Buffer
+			for {
+				line, err := buffer.ReadBytes('\n')
+				s := string(line)
+				if err != nil {
+					break
+				}
+				if strings.Compare(s, boundary) == 0 {
+					break
+				}
+				//结束
+				if strings.Compare(s, endBoundary) == 0 {
+					isFinish = true
+					break
+				}
+				//内存拷贝
+				_, err = data.Write(line)
+				if err != nil {
+					break
+				}
+			}
+			bs := data.Bytes()
+			formD.Data = bs[4 : len(bs)-2]
+			form.FormDataMap[formD.Name] = formD
+			if isFinish {
+				return form, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("[error]:FormData第二行数据解析失败")
+}
+
+func (c *Context) GetBody() []byte {
+	//<-c.BodyReady从管道中取出值
+	//发送到管道 c.BodyReady <- 1
+	once.Do(
+		func() {
+			if c.BodySize > 0 {
+				<-c.BodyReady
+				//等数据发送过来
+			}
+		})
+	return c.body
 }
 
 //GET /ping HTTP/1.1
@@ -43,13 +195,14 @@ func newContext(conn net.Conn) (*Context, error) {
 		Headers:        make(map[string]string),
 		HandlerIndex:   -1,
 		StartTimeStamp: time.Now().UnixNano(),
+		BodyReady:      make(chan int, 1), // 添加一个缓冲,让那个线程快点退出.
 	}
 	//1.GET headers
 	reader := bufio.NewReader(conn)
 	//1.1 请求方法，请求路径，请求协议.
 	line, _, err := reader.ReadLine()
-	//log.Printf("%s\n", string(line))
 	s := string(line)
+	fmt.Printf("%s\n", s)
 	if err != nil || strings.EqualFold(s, "\r\n") {
 		//HTTP 头解析错误
 		return nil, err
@@ -65,7 +218,6 @@ func newContext(conn net.Conn) (*Context, error) {
 	//1.2 其他 header 存起来.
 	for {
 		line, _, _ := reader.ReadLine()
-		//log.Printf("%s\n", string(line))
 		if len(line) == 0 {
 			break
 		}
@@ -81,13 +233,20 @@ func newContext(conn net.Conn) (*Context, error) {
 	//2. 请求体
 	s = ctx.Headers[ContentLength]
 	size, err := strconv.Atoi(s)
+	ctx.BodySize = size
 	if err != nil {
 		size = 0
 	}
 	if size > 0 {
+		// fmt.Printf("%s%d\n", "-----------数据开始读取----------", size)
 		data := make([]byte, size)
-		conn.Read(data)
-		ctx.Body = data
+		//TODO: 为什么这里开不了协程??? 一开就读取不了数据?
+		// fmt.Printf("%s\n", "----------go fun()--------")
+		ctx.Conn.Read(data)
+		ctx.body = data
+		fmt.Printf("%s\n", string(ctx.body))
+		ctx.BodyReady <- 1
+		// fmt.Printf("%s\n", "-----------数据读取完毕----------")
 	}
 	return ctx, nil
 }
@@ -152,68 +311,30 @@ func (c *Context) NewWs() (*WsContext, error) {
 
 //---------------- form data ------------
 
-//FromData
-type FromData struct {
+type Form struct {
+	FormFileMap map[string]*FormFile //key 为 name
+	FormDataMap map[string]*FormData //key 为 name
+}
+
+// Form 文件类型
+// Example
+// 	Content-Disposition: form-data; name="uploadFile"; filename="f1.txt"
+// 	Content-Type: text/plain
+//
+//	文件1
+type FormFile struct {
 	Name        string
 	FileName    string
 	ContentType string
 	Data        []byte
 }
 
-//FormData 我
-func (c *Context) GetFormData() (map[string]*FromData, error) {
-	boundary := ""
-	formDataMap := make(map[string]*FromData)
-	//1. 拿到分割符
-	ct, ok := c.Headers[ContentType]
-	if !ok {
-		return nil, fmt.Errorf("[error]:do not have contentType header")
-	}
-	splits := strings.Split(ct, "boundary=")
-	if len(splits) != 2 {
-		return nil, fmt.Errorf("[error]:boundary split err")
-	}
-	//赋值 boundary.
-	boundary = splits[1]
-
-	//2. 拿到数据
-	buffer := bytes.NewBuffer(c.Body)
-	for {
-		//换行读取
-		line, err := buffer.ReadBytes('\n')
-		if err != nil {
-			_, err := buffer.ReadBytes('\n')
-			if err == io.EOF {
-				break
-			} else {
-				continue
-			}
-		}
-		//判断是否为分割符
-		if string(line) == boundary {
-			fromD := &FromData{}
-			//读取接下
-			line, err := buffer.ReadBytes('\n')
-			if err != nil {
-				break
-			}
-			str := string(line)
-			reg := `Content-Disposition: (\S*?); name="(\S*?)"; filename="(\S*?)"`
-			subs := stringu.GetSubStringByRegex(str, reg)
-			fromD.Name = subs[1]
-			fromD.FileName = subs[2]
-			//读取接下
-			line, err = buffer.ReadBytes('\n')
-			if err != nil {
-				break
-			}
-			str2 := string(line)
-			regx2 := `Content-Type: (\S*)`
-			subs2 := stringu.GetSubStringByRegex(str2, regx2)
-			fromD.ContentType = subs2[0]
-		}
-
-	}
-
-	return formDataMap, nil
+// Form 表单键值对类型
+// Example
+//	Content-Disposition: form-data; name="sign_time"
+//
+//	2019
+type FormData struct {
+	Name string
+	Data []byte
 }
