@@ -1,5 +1,7 @@
 github.com/dengjiawen8955/go_utils v1.6.2 h1:0lWAZyEMzRUI2XFiiZrOCU9hTKq2BZ3xnl9cwdGMsfQ=
 github.com/dengjiawen8955/go_utils v1.6.2/go.mod h1:Y+2ra1sNKs/s2ne1wWDw32jtOWlmiOe3NqopUXL0FTE=
+github.com/dengjiawen8955/go_utils v1.6.5 h1:FLDTKrMvHRJS/mZomxmfR97PElRdJYMV07T8J7P0Syo=
+github.com/dengjiawen8955/go_utils v1.6.5/go.mod h1:Y+2ra1sNKs/s2ne1wWDw32jtOWlmiOe3NqopUXL0FTE=
 github.com/fwhezfwhez/errorx v1.1.0 h1:795cMWZFM+thQfKaC5Cjnp/h6naUEbsoQxOb/yvwn0c=
 github.com/fwhezfwhez/errorx v1.1.0/go.mod h1:epOraH2nrfmf4JUao5290NFuXw9t6MZnzgwoW5guABE=
 github.com/gofrs/uuid v4.0.0+incompatible h1:1SD/1F5pU8p29ybwgQSwpQk+mwdRrXCYuPhW6m+TnJw=

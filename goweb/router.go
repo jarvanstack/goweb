@@ -17,17 +17,18 @@ type router struct {
 	handlers    map[string]HttpHandler
 	roots       map[string]*node
 	contextPath string
-	web *Web
+	web         *Web
 }
 
-func newRouter(contextPath string,web *Web) *router {
+func newRouter(contextPath string, web *Web) *router {
 	return &router{
 		handlers:    make(map[string]HttpHandler),
 		roots:       make(map[string]*node),
 		contextPath: contextPath,
-		web: web,
+		web:         web,
 	}
 }
+
 //添加到路由
 //method: GET
 //cp: = /bmft
@@ -40,12 +41,11 @@ func (r *router) addRouter(method, urlPath string, httpHandler HttpHandler) {
 		r.roots[rootKey] = newNode(rootKey)
 	}
 	//放入路由
-	key := rootKey+urlPath
-	r.roots[rootKey].insert(key,parsePath(urlPath),0)
+	key := rootKey + urlPath
+	r.roots[rootKey].insert(key, parsePath(urlPath), 0)
 	//放入handler map
 	r.handlers[key] = httpHandler
 }
-
 
 func (r *router) runHTTP(network, addr string) {
 	log.Printf("Listening and serving HTTP on %s\n", addr)
@@ -84,22 +84,22 @@ func (r *router) runHTTP(network, addr string) {
 					middlewares = append(middlewares, group.middlewares...)
 				}
 			}
-			ctx.handlers = middlewares
+			ctx.Handlers = middlewares
 			//拿到路由
 			paths := parsePath(ctx.Path)
-			rootKey := fmt.Sprintf(keyFmt,ctx.Method,"/"+paths[0])
+			rootKey := fmt.Sprintf(keyFmt, ctx.Method, "/"+paths[0])
 			root := r.roots[rootKey]
 			if root == nil {
 				ctx.Json(restfulu.NotFound("NOT_FOUND"))
-			}else {
+			} else {
 				n := root.search(paths[1:])
 				if n == nil {
 					ctx.Json(restfulu.NotFound("NOT_FOUND"))
-				}else {
+				} else {
 					handler := r.handlers[n.keyOfHandler]
 					//执行业务方法
 					//业务方法也可以看做中间件，最后一个中间件
-					ctx.handlers = append(ctx.handlers, handler)
+					ctx.Handlers = append(ctx.Handlers, handler)
 					ctx.Next()
 				}
 			}
