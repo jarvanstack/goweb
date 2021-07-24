@@ -23,9 +23,6 @@ const (
 	WsMagicKeyPost  = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 )
 
-//变量
-var once sync.Once
-
 type Context struct {
 	Conn    net.Conn
 	Addr    net.Addr          //conn 拿到的地址
@@ -40,6 +37,7 @@ type Context struct {
 	StartTimeStamp int64         //会话开始的时间戳,用于计算耗时.
 	BodyReady      chan int      //管道读取 body body 数据读取成功后会进入会再管道中存放值
 	BodySize       int           //数据体的大小
+	once           sync.Once     //
 }
 
 //解析前端 Json 数据, 需要传入 struct 指针.
@@ -194,7 +192,7 @@ func (c *Context) GetForm() (*Form, error) {
 func (c *Context) GetBody() []byte {
 	// <-c.BodyReady从管道中取出值
 	// 发送到管道 c.BodyReady <- 1
-	once.Do(
+	c.once.Do(
 		func() {
 			if c.BodySize > 0 {
 				// fmt.Printf("%s\n", "等数据发送过来")
@@ -215,6 +213,7 @@ func newContext(conn net.Conn) (*Context, error) {
 		HandlerIndex:   -1,
 		StartTimeStamp: time.Now().UnixNano(),
 		BodyReady:      make(chan int, 1), // 添加一个缓冲,让那个线程快点退出.
+		once:           sync.Once{},
 	}
 	//1.GET headers
 	reader := bufio.NewReader(conn)
