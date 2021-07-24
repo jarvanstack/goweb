@@ -8,11 +8,12 @@ import (
 )
 
 func main() {
-	w := v1.NewWeb("/v1")
+	w := v1.NewWeb("/bmft")
+	w.NewGroup("/v1")
 	w.Get("/ping", func(ctx *v1.Context) {
 		cl := ctx.Headers["content-length"]
 		fmt.Printf("%s\n", cl)
 		ctx.Json(restfulu.Ok("PONG"))
 	})
-	w.RunHTTP(8000)
+	w.RunHTTP(8001)
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/dengjiawen8955/go_utils/restfulu"
+	"github.com/dengjiawen8955/goweb/goweb6/goweb"
 )
 
 //user http office
@@ -22,5 +23,17 @@ func Test_sf_test(t *testing.T) {
 }
 
 func Test_Ctx_GetFrom(t *testing.T) {
+
+}
+
+func Test_body_read(t *testing.T) {
+	w := goweb.NewWeb("/bmft")
+	v1 := w.NewGroup("/v1")
+	{
+		v1.Get("/ping", func(ctx *goweb.Context) {
+			ctx.Json(restfulu.Ok("OK"))
+		})
+	}
+	w.RunHTTP(8000)
 
 }

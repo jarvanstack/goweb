@@ -2,11 +2,23 @@ package utest
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/dengjiawen8955/go_utils/stringu"
 )
 
+func Test_http_file(t *testing.T) {
+	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		f, fh, err := r.FormFile("file")
+		fmt.Println(fh.Filename)
+		fmt.Printf("err: %v\n", err)
+		buf := make([]byte, 1024)
+		f.Read(buf)
+
+	})
+
+}
 func Test_regx(t *testing.T) {
 	str := `Content-Disposition: form-data; name="file"; filename="Snipaste.png"`
 	regx := `Content-Disposition: (\S*?); name="(\S*?)"; filename="(\S*?)"`
