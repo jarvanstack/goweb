@@ -8,37 +8,36 @@ import (
 	"github.com/dengjiawen8955/goweb/goweb6/goweb"
 )
 
+type U struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
+
 func main() {
 	fmt.Printf("%s\n", "hi")
 	web := goweb.NewWeb("/bmft")
 	v1 := web.NewGroup("/v1")
 	{
-		v1.Post("/sf", func(ctx *goweb.Context) {
+		v1.Post("/json", func(ctx *goweb.Context) {
 			b := ctx.GetBody()
 			fmt.Printf("%s\n", "--------body------")
-			fmt.Printf("%s\n", string(b))
-			//--处理 1. 拿到boundary
-			// buf := bytes.NewBuffer(b)
-			// buf.ReadBytes("")
-			//返回数据
-			// form, err := ctx.GetForm()
-			// if err != nil {
-			// 	fmt.Printf("%s\n", "bad")
-			// } else {
-			// 	fmt.Printf("form=%#v\n", form)
-			// 	fmt.Printf("files=%#v\n", form.FormFileMap)
-			// 	f2 := form.FormFileMap["file2"].Data
-			// 	fmt.Printf("f2=%#v\n", f2)
-			// 	fmt.Printf("f2=%#v\n", string(f2))
-			// 	f3 := form.FormFileMap["img3"]
-			// 	file, _ := os.OpenFile(f3.FileName, os.O_RDWR|os.O_CREATE, 0766)
-			// 	file.Write(f3.Data)
-			// 	file.Close()
-			// 	fmt.Printf("datas=%#v\n", form.FormDataMap)
-			// 	fmt.Printf("%s\n", "ok")
-			// }
-			ctx.Json(restfulu.Ok("OK"))
 
+			fmt.Printf("%s\n", string(b))
+			u := &U{}
+			ctx.Unmarshal(u)
+			ctx.Json(restfulu.Ok(u.Name))
+
+		})
+		v1.Post("/fd", func(ctx *goweb.Context) {
+			fmt.Printf("%s\n", "--------body------")
+			b := ctx.GetBody()
+			fmt.Printf("%s\n", string(b))
+			f, err := ctx.GetForm()
+			fmt.Printf("err: %v\n", err)
+			fd := f.FormDataMap["fd1"]
+			fmt.Printf("fd: %v\n", fd)
+			fd2 := f.FormDataMap["fd2"]
+			fmt.Printf("fd2: %v\n", fd2)
 		})
 	}
 	web.RunHTTP(8888)

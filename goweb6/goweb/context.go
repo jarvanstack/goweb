@@ -3,6 +3,7 @@ package goweb
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
@@ -41,7 +42,24 @@ type Context struct {
 	BodySize       int           //数据体的大小
 }
 
-//FormData 我
+//解析前端 Json 数据, 需要传入 struct 指针.
+//Example:
+// 	u := &U{}
+// 	ctx.Unmarshal(u)
+// 	ctx.Json(restfulu.Ok(u.Name))
+func (c *Context) Unmarshal(v interface{}) error {
+	if !strings.EqualFold(c.Headers[ContentType], JsonContentType) {
+		return fmt.Errorf("[error]:content-type not %s", JsonContentType)
+	}
+	err := json.Unmarshal(c.GetBody(), v)
+	if err != nil {
+		return fmt.Errorf("[error]:json Unmarshal err")
+	}
+	return nil
+}
+
+// 开发阶段,不能使用
+//TODO: 开发阶段
 func (c *Context) GetForm() (*Form, error) {
 	boundary := ""
 	endBoundary := ""
@@ -174,11 +192,12 @@ func (c *Context) GetForm() (*Form, error) {
 }
 
 func (c *Context) GetBody() []byte {
-	//<-c.BodyReady从管道中取出值
-	//发送到管道 c.BodyReady <- 1
+	// <-c.BodyReady从管道中取出值
+	// 发送到管道 c.BodyReady <- 1
 	once.Do(
 		func() {
 			if c.BodySize > 0 {
+				// fmt.Printf("%s\n", "等数据发送过来")
 				<-c.BodyReady
 				//等数据发送过来
 			}
@@ -238,15 +257,16 @@ func newContext(conn net.Conn) (*Context, error) {
 		size = 0
 	}
 	if size > 0 {
-		// fmt.Printf("%s%d\n", "-----------数据开始读取----------", size)
-		data := make([]byte, size)
-		//TODO: 为什么这里开不了协程??? 一开就读取不了数据?
-		// fmt.Printf("%s\n", "----------go fun()--------")
-		ctx.Conn.Read(data)
-		ctx.body = data
-		fmt.Printf("%s\n", string(ctx.body))
-		ctx.BodyReady <- 1
-		// fmt.Printf("%s\n", "-----------数据读取完毕----------")
+		go func() {
+			//TODO: 为什么这里开不了协程??? 一开就读取不了数据?
+			//不要使用 conn conn 的权限给 Reader 了,现在只有 reader
+			data := make([]byte, size)
+			reader.Read(data)
+			ctx.body = data
+			// fmt.Printf("%s\n", string(ctx.body))
+			ctx.BodyReady <- 1
+		}()
+
 	}
 	return ctx, nil
 }
