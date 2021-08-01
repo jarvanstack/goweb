@@ -59,8 +59,8 @@ func (c *Context) Unmarshal(v interface{}) error {
 // 开发阶段,不能使用
 //TODO: 开发阶段
 func (c *Context) GetForm() (*Form, error) {
-	boundary := ""
-	endBoundary := ""
+	var boundary []byte
+	var endBoundary []byte
 	isFinish := false
 	form := &Form{
 		FormFileMap: make(map[string]*FormFile),
@@ -76,8 +76,8 @@ func (c *Context) GetForm() (*Form, error) {
 		return nil, fmt.Errorf("[error]:boundary split err")
 	}
 	//赋值 boundary.
-	boundary = "--" + splits[1] + "\r\n"
-	endBoundary = "--" + splits[1] + "--\r\n"
+	boundary = []byte("--" + splits[1] + "\r\n")
+	endBoundary = []byte("--" + splits[1] + "--\r\n")
 	//拿到数据body
 	buffer := bytes.NewBuffer(c.GetBody())
 	//取出第一行没用的分隔符
@@ -111,25 +111,28 @@ func (c *Context) GetForm() (*Form, error) {
 			if err != nil {
 				continue
 			}
+			//Content-Type: image/png
 			reg = `Content-Type: (\S*?)`
-			subs, err = stringu.GetSubStringByRegex(string(line), reg)
+			subs = strings.Split(string(line), ": ")
 			if err != nil {
 				continue
 			}
-			file.ContentType = subs[0]
+			file.ContentType = subs[1]
 			//开始读取数据
 			var data bytes.Buffer
+			sumByte := 0
 			for {
 				line, err := buffer.ReadBytes('\n')
-				s := string(line)
+				fmt.Printf("%s", string(line))
+				sumByte += len(line)
 				if err != nil {
 					break
 				}
-				if strings.Compare(s, boundary) == 0 {
+				if bytes.Equal(line, boundary) {
 					break
 				}
 				//结束
-				if strings.Compare(s, endBoundary) == 0 {
+				if bytes.Equal(line, endBoundary) {
 					isFinish = true
 					break
 				}
@@ -143,9 +146,7 @@ func (c *Context) GetForm() (*Form, error) {
 			bs := data.Bytes()
 			file.Data = bs[4 : len(bs)-2]
 			form.FormFileMap[file.Name] = file
-			if isFinish {
-				return form, nil
-			}
+			return form, nil
 		} else if len(splits) == 2 {
 			//data
 			formD := &FormData{}
@@ -160,15 +161,14 @@ func (c *Context) GetForm() (*Form, error) {
 			var data bytes.Buffer
 			for {
 				line, err := buffer.ReadBytes('\n')
-				s := string(line)
 				if err != nil {
 					break
 				}
-				if strings.Compare(s, boundary) == 0 {
+				if bytes.Equal(line, boundary) {
 					break
 				}
 				//结束
-				if strings.Compare(s, endBoundary) == 0 {
+				if bytes.Equal(line, endBoundary) {
 					isFinish = true
 					break
 				}
@@ -356,4 +356,22 @@ type FormFile struct {
 type FormData struct {
 	Name string
 	Data []byte
+}
+
+//TODO: get file
+func (f *Form) GetFile(key string) (*FormFile, error) {
+	ff, ok := f.FormFileMap[key]
+	if !ok {
+		return nil, fmt.Errorf("[error]:file %s is not exist", key)
+	}
+	return ff, nil
+}
+
+//TODO: get file
+func (f *Form) GetFormData(key string) (*FormData, error) {
+	fd, ok := f.FormDataMap[key]
+	if !ok {
+		return nil, fmt.Errorf("[error]:file %s is not exist", key)
+	}
+	return fd, nil
 }

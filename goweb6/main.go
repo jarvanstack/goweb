@@ -28,16 +28,19 @@ func main() {
 			ctx.Json(restfulu.Ok(u.Name))
 
 		})
-		v1.Post("/fd", func(ctx *goweb.Context) {
+		v1.Post("/sf", func(ctx *goweb.Context) {
 			fmt.Printf("%s\n", "--------body------")
 			b := ctx.GetBody()
 			fmt.Printf("%s\n", string(b))
 			f, err := ctx.GetForm()
 			fmt.Printf("err: %v\n", err)
-			fd := f.FormDataMap["fd1"]
-			fmt.Printf("fd: %v\n", fd)
-			fd2 := f.FormDataMap["fd2"]
-			fmt.Printf("fd2: %v\n", fd2)
+			// ff, err2 := f.GetFile("f1")
+			// fmt.Printf("err2: %v\n", err2)
+			// fmt.Println(ff.FileName)
+			ff, err2 := f.GetFile("f2")
+			fmt.Printf("err2: %v\n", err2)
+			fmt.Println(ff.FileName)
+			ctx.Json(restfulu.Ok(ff))
 		})
 	}
 	web.RunHTTP(8888)

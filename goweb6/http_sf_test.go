@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"testing"
@@ -8,6 +9,10 @@ import (
 	"github.com/dengjiawen8955/go_utils/restfulu"
 	"github.com/dengjiawen8955/goweb/goweb6/goweb"
 )
+
+func Test_byte_read(t *testing.T) {
+	fmt.Printf("bytes.Equal([]byte(\"1\"), []byte(\"2\")): %v\n", bytes.Equal([]byte("1"), []byte("2")))
+}
 
 //user http office
 func Test_sf_test(t *testing.T) {
