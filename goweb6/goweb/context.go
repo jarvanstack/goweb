@@ -57,7 +57,8 @@ func (c *Context) Unmarshal(v interface{}) error {
 }
 
 // 开发阶段,不能使用
-//TODO: 开发阶段
+//TODO: 开发阶段,0807 放弃开发表单发送文件
+// form 支持文本文件和表单不支持二进制
 func (c *Context) GetForm() (*Form, error) {
 	var boundary []byte
 	var endBoundary []byte
@@ -113,18 +114,18 @@ func (c *Context) GetForm() (*Form, error) {
 			}
 			//Content-Type: image/png
 			reg = `Content-Type: (\S*?)`
-			subs = strings.Split(string(line), ": ")
+			//去掉换行符再分割
+			subs = strings.Split(string(line[:len(line)-2]), ": ")
 			if err != nil {
 				continue
 			}
 			file.ContentType = subs[1]
+			//清理一行多的数据
+			buffer.ReadBytes('\n')
 			//开始读取数据
 			var data bytes.Buffer
-			sumByte := 0
 			for {
 				line, err := buffer.ReadBytes('\n')
-				fmt.Printf("%s", string(line))
-				sumByte += len(line)
 				if err != nil {
 					break
 				}
@@ -144,7 +145,9 @@ func (c *Context) GetForm() (*Form, error) {
 				}
 			}
 			bs := data.Bytes()
-			file.Data = bs[4 : len(bs)-2]
+			if len(bs) >= 2 {
+				file.Data = bs
+			}
 			form.FormFileMap[file.Name] = file
 			return form, nil
 		} else if len(splits) == 2 {
@@ -157,6 +160,8 @@ func (c *Context) GetForm() (*Form, error) {
 				continue
 			}
 			formD.Name = subs[0]
+			//清理一行空数据
+			buffer.ReadBytes('\n')
 			//开始读取数据
 			var data bytes.Buffer
 			for {
@@ -179,7 +184,8 @@ func (c *Context) GetForm() (*Form, error) {
 				}
 			}
 			bs := data.Bytes()
-			formD.Data = bs[4 : len(bs)-2]
+			//最后清理换行符
+			formD.Data = bs[:len(bs)-2]
 			form.FormDataMap[formD.Name] = formD
 			if isFinish {
 				return form, nil
@@ -220,7 +226,6 @@ func newContext(conn net.Conn) (*Context, error) {
 	//1.1 请求方法，请求路径，请求协议.
 	line, _, err := reader.ReadLine()
 	s := string(line)
-	fmt.Printf("%s\n", s)
 	if err != nil || strings.EqualFold(s, "\r\n") {
 		//HTTP 头解析错误
 		return nil, err
@@ -240,7 +245,7 @@ func newContext(conn net.Conn) (*Context, error) {
 			break
 		}
 		s := string(line)
-		fmt.Printf("%s\n", s)
+		// fmt.Printf("%s\n", s)
 		split := strings.Split(s, ": ")
 		if len(split) == 2 {
 			ctx.Headers[strings.ToLower(split[0])] = split[1]
@@ -262,7 +267,6 @@ func newContext(conn net.Conn) (*Context, error) {
 			data := make([]byte, size)
 			reader.Read(data)
 			ctx.body = data
-			// fmt.Printf("%s\n", string(ctx.body))
 			ctx.BodyReady <- 1
 		}()
 
