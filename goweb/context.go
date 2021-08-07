@@ -37,16 +37,13 @@ type Context struct {
 	StartTimeStamp int64         //会话开始的时间戳,用于计算耗时.
 	BodyReady      chan int      //管道读取 body body 数据读取成功后会进入会再管道中存放值
 	BodySize       int           //数据体的大小
-	once           sync.Once     //body读取管道唯一锁
+	once           sync.Once     //
 }
 
 //解析前端 Json 数据, 需要传入 struct 指针.
-//
-// 用 json 生成 struct: https://www.sojson.com/json/json2go.html
-//
 //Example:
 // 	u := &U{}
-// 	ctx.Unmarshal(u)
+// 	ctx.UnmarshalJson(u)
 // 	ctx.Json(restfulu.Ok(u.Name))
 func (c *Context) UnmarshalJson(v interface{}) error {
 	if !strings.EqualFold(c.Headers[ContentType], JsonContentType) {
@@ -60,10 +57,11 @@ func (c *Context) UnmarshalJson(v interface{}) error {
 }
 
 // 开发阶段,不能使用
-//TODO: 开发阶段
+//TODO: 开发阶段,0807 放弃开发表单发送文件
+// form 支持文本文件和表单不支持二进制
 func (c *Context) GetForm() (*Form, error) {
-	boundary := ""
-	endBoundary := ""
+	var boundary []byte
+	var endBoundary []byte
 	isFinish := false
 	form := &Form{
 		FormFileMap: make(map[string]*FormFile),
@@ -79,8 +77,8 @@ func (c *Context) GetForm() (*Form, error) {
 		return nil, fmt.Errorf("[error]:boundary split err")
 	}
 	//赋值 boundary.
-	boundary = "--" + splits[1] + "\r\n"
-	endBoundary = "--" + splits[1] + "--\r\n"
+	boundary = []byte("--" + splits[1] + "\r\n")
+	endBoundary = []byte("--" + splits[1] + "--\r\n")
 	//拿到数据body
 	buffer := bytes.NewBuffer(c.GetBody())
 	//取出第一行没用的分隔符
@@ -114,25 +112,28 @@ func (c *Context) GetForm() (*Form, error) {
 			if err != nil {
 				continue
 			}
+			//Content-Type: image/png
 			reg = `Content-Type: (\S*?)`
-			subs, err = stringu.GetSubStringByRegex(string(line), reg)
+			//去掉换行符再分割
+			subs = strings.Split(string(line[:len(line)-2]), ": ")
 			if err != nil {
 				continue
 			}
-			file.ContentType = subs[0]
+			file.ContentType = subs[1]
+			//清理一行多的数据
+			buffer.ReadBytes('\n')
 			//开始读取数据
 			var data bytes.Buffer
 			for {
 				line, err := buffer.ReadBytes('\n')
-				s := string(line)
 				if err != nil {
 					break
 				}
-				if strings.Compare(s, boundary) == 0 {
+				if bytes.Equal(line, boundary) {
 					break
 				}
 				//结束
-				if strings.Compare(s, endBoundary) == 0 {
+				if bytes.Equal(line, endBoundary) {
 					isFinish = true
 					break
 				}
@@ -144,11 +145,11 @@ func (c *Context) GetForm() (*Form, error) {
 				}
 			}
 			bs := data.Bytes()
-			file.Data = bs[4 : len(bs)-2]
-			form.FormFileMap[file.Name] = file
-			if isFinish {
-				return form, nil
+			if len(bs) >= 2 {
+				file.Data = bs
 			}
+			form.FormFileMap[file.Name] = file
+			return form, nil
 		} else if len(splits) == 2 {
 			//data
 			formD := &FormData{}
@@ -159,19 +160,20 @@ func (c *Context) GetForm() (*Form, error) {
 				continue
 			}
 			formD.Name = subs[0]
+			//清理一行空数据
+			buffer.ReadBytes('\n')
 			//开始读取数据
 			var data bytes.Buffer
 			for {
 				line, err := buffer.ReadBytes('\n')
-				s := string(line)
 				if err != nil {
 					break
 				}
-				if strings.Compare(s, boundary) == 0 {
+				if bytes.Equal(line, boundary) {
 					break
 				}
 				//结束
-				if strings.Compare(s, endBoundary) == 0 {
+				if bytes.Equal(line, endBoundary) {
 					isFinish = true
 					break
 				}
@@ -182,7 +184,8 @@ func (c *Context) GetForm() (*Form, error) {
 				}
 			}
 			bs := data.Bytes()
-			formD.Data = bs[4 : len(bs)-2]
+			//最后清理换行符
+			formD.Data = bs[:len(bs)-2]
 			form.FormDataMap[formD.Name] = formD
 			if isFinish {
 				return form, nil
@@ -223,7 +226,6 @@ func newContext(conn net.Conn) (*Context, error) {
 	//1.1 请求方法，请求路径，请求协议.
 	line, _, err := reader.ReadLine()
 	s := string(line)
-	// fmt.Printf("%s\n", s)
 	if err != nil || strings.EqualFold(s, "\r\n") {
 		//HTTP 头解析错误
 		return nil, err
@@ -265,7 +267,6 @@ func newContext(conn net.Conn) (*Context, error) {
 			data := make([]byte, size)
 			reader.Read(data)
 			ctx.body = data
-			// fmt.Printf("%s\n", string(ctx.body))
 			ctx.BodyReady <- 1
 		}()
 
@@ -359,4 +360,22 @@ type FormFile struct {
 type FormData struct {
 	Name string
 	Data []byte
+}
+
+//TODO: get file
+func (f *Form) GetFile(key string) (*FormFile, error) {
+	ff, ok := f.FormFileMap[key]
+	if !ok {
+		return nil, fmt.Errorf("[error]:file %s is not exist", key)
+	}
+	return ff, nil
+}
+
+//TODO: get file
+func (f *Form) GetFormData(key string) (*FormData, error) {
+	fd, ok := f.FormDataMap[key]
+	if !ok {
+		return nil, fmt.Errorf("[error]:file %s is not exist", key)
+	}
+	return fd, nil
 }
