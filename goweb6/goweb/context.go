@@ -43,9 +43,9 @@ type Context struct {
 //解析前端 Json 数据, 需要传入 struct 指针.
 //Example:
 // 	u := &U{}
-// 	ctx.Unmarshal(u)
+// 	ctx.UnmarshalJson(u)
 // 	ctx.Json(restfulu.Ok(u.Name))
-func (c *Context) Unmarshal(v interface{}) error {
+func (c *Context) UnmarshalJson(v interface{}) error {
 	if !strings.EqualFold(c.Headers[ContentType], JsonContentType) {
 		return fmt.Errorf("[error]:content-type not %s", JsonContentType)
 	}

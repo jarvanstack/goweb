@@ -27,7 +27,7 @@ func main() {
 
 			fmt.Printf("%s\n", string(b))
 			u := &U{}
-			ctx.Unmarshal(u)
+			ctx.UnmarshalJson(u)
 			ctx.Json(restfulu.Ok(u.Name))
 
 		})
